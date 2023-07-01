@@ -11,14 +11,15 @@ class Table{
         this.house = new Player('house', 'house', this.gameType);
         this.gamePhase = 'betting';
         
-        this.rsultLog = [];
+        this.resultLog = [];
     }
     //playser: Player.promptPlayer()を使用してGameDecesionを取得。GameDecesionとgametypeに応じてPlayerの状態を更新する
     //例：playerがhitを選択。手札が21を超える場合はbustとなり、gameStatusをbustに変更する
     evaluateMove(player){
 
 }
-
+    //return string: 新しいターンが始まる直前の全プレイヤーの状態を表す文字列
+    //このメソッドの出力は、各ラウンドの終了時にテーブルのresultLogメンバを更新するために使用される
     blackjackEvaluateAndGetRoundResult(){
     }
 
