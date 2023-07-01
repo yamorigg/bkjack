@@ -1,4 +1,4 @@
-//一連の進行を管理するクラス
+//一連の進行を管理するクラス.
 class Table{
     //gameType : ゲームの種類
     //betDominations : 配列。各要素はベットできるチップの単位
@@ -65,7 +65,7 @@ class Table{
 
     
 
-}
+
 
 
 class Player{
