@@ -2,17 +2,43 @@
 class Table{
     //gameType : ゲームの種類
     //betDominations : 配列。各要素はベットできるチップの単位
-    //
-    constructor(gameType, betDominations){
+    //numberOfPlayers : テーブルに参加するプレイヤーの数
+    //human: プレイヤーが人間かどうか表す。値がnullもしくは'ai'の場合はAIとして扱う
+    constructor(numberOfPlayers, human ,gameType, betDominations = [1, 5, 10, 25, 100]){
         this.gameType = gameType;
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
-        this.players = [];
+        this.players = this.addPlayers();
+        this.human = human;
+        this.numberOfPlayers = numberOfPlayers;
         this.house = new Player('house', 'house', this.gameType);
         this.gamePhase = 'betting';
-        
         this.resultLog = [];
+        }
+
+    /*プレイヤーをplayers配列に追加する。
+    humanは最初のプレイヤーとして扱う。
+    this.numberOfPlayersの数だけプレイヤーを追加する。
+    humanがnullもしくは'ai'の場合はAIとして扱う。そうでない場合はhumanに入力された値を名前として扱う。typeはhumanとする。
+    houseはplayers配列に追加しない
+    return:Playerの配列
+    */
+    addPlayers(){
+        let players = [];
+        //humanがnullもしくは'ai'の場合はAIとして扱う。そうでない場合はhumanに入力された値を名前として扱う。typeはhumanとする。
+        if (this.human === null || this.human === 'ai'){
+            players.push(new Player('Player1', 'ai', this.gameType));
+        }else{
+            players.push(new Player(this.human, 'human', this.gameType));
+        }
+        //this.numberOfPlayersの数だけプレイヤーを追加する。
+        for (let i = 1; i < this.numberOfPlayers; i++){
+            players.push(new Player('Player' + (i + 1), 'ai', this.gameType));
+        } 
+        return players;
     }
+
+
     //playser: Player.promptPlayer()を使用してGameDecesionを取得。GameDecesionとgametypeに応じてPlayerの状態を更新する
     //例：playerがhitを選択。手札が21を超える場合はbustとなり、gameStatusをbustに変更する
     evaluateMove(player){
@@ -23,49 +49,55 @@ class Table{
     blackjackEvaluateAndGetRoundResult(){
     }
 
-    
+    //return null: デッキから2枚のカードを引き、プレイヤーの手札に加えることで全プレイヤーの状態を更新する。
+    //プレイヤータイプがhouseの場合は、カードを伏せておく
     blackjackAssignPlayerHands(){
 
     }
 
+    //return null: すべてのプレイヤーの状態を更新する。手札の配列をemptyにし、betを0にする
     blackjackClearPlayerHandsAndBets(){
     }
 
+    //return Player: 現在のプレイヤーを返す
     getTurnPlayer(){
 
     }
 
-
-    haveTruen(userData){
+    //reutrn null:テーブルの状態を更新する。
+    haveTurn(userData){
 
     }
 
-
+    //return booelan:テーブルがプレイヤー配列の最初のプレイヤーを指しているかときはtrueを返す。そうでない場合はfalseを返す。
     onFirstPlayer(){
-
+        if (this.players[0] === this.getTurnPlayer()){
+            return true;
+        }else{
+            return false;
+        }
     }
 
-
+    //return boolean:テーブルがプレイヤー配列の最+後のプレイヤーを指しているかときはtrueを返す。そうでない場合はfalseを返す。
     onLastPlayer(){
-
+        if (this.players[this.players.length - 1] === this.getTurnPlayer()){
+            return true;
+        }else{
+            return false;
+    }
     }
 
-
-    //return boolean: すべてのプレイヤー{'broken', 'buster', 'stand', 'stand'}のいずれかの状態になっているかどうか
+    //return boolean: すべてのプレイヤー{'broken', 'bust', 'stand', 'surrender'}のいずれかの状態になっているかどうか
     allPlayerActionsResolved(){
-
+        for (let i = 0; i < this.players.length; i++){
     }
+}
 
 
 
 
 
 }
-
-
-    
-
-
 
 
 class Player{
@@ -109,9 +141,7 @@ class Player{
         }
         //手札の合計を返す
         return score;
-
     }
-
     //AIのゲーム判断アルゴリズム
     aiDecide(){
         //手札の合計が17以上ならstand
@@ -122,7 +152,6 @@ class Player{
         else{
             return 'hit';
         }
-
     }
 
 }
@@ -217,3 +246,11 @@ String rank : {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"}
 
     }
 }
+
+
+let table1 = new Table('blackjack');
+while(table1.gamePhase !== 'roundOver'){
+    table1.haveTruen();
+}
+
+console.log(table1.resultLog);
