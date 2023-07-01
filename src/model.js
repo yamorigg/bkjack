@@ -41,9 +41,7 @@ class Table{
 
     //playser: Player.promptPlayer()を使用してGameDecesionを取得。GameDecesionとgametypeに応じてPlayerの状態を更新する
     //例：playerがhitを選択。手札が21を超える場合はbustとなり、gameStatusをbustに変更する
-    evaluateMove(player){
 
-}
     //return string: 新しいターンが始まる直前の全プレイヤーの状態を表す文字列
     //このメソッドの出力は、各ラウンドの終了時にテーブルのresultLogメンバを更新するために使用される
     blackjackEvaluateAndGetRoundResult(){
@@ -66,9 +64,29 @@ class Table{
 
     //reutrn null:テーブルの状態を更新する。
     haveTurn(userData){
-
+        
     }
 
+    evaluateMove(player){
+        let action = player.promptPlayer().action;
+        if (action === 'hit'){
+            player.hand.push(this.deck.drawOne());
+            if (this.gameType === 'blackjack'){
+                if (player.handTotal() > 21){
+                    player.gameStatus = 'bust';
+                }
+            }
+        }else if (action === 'stand'){
+            player.gameStatus = 'stand';
+        }else if (action === 'surrender'){
+            player.gameStatus = 'surrender';
+        }else if (action === 'double'){
+            player.hand.push(this.deck.drawOne());
+            player.bet *= 2;
+            player.gameStatus = 'stand';
+    }
+
+}
     //return booelan:テーブルがプレイヤー配列の最初のプレイヤーを指しているかときはtrueを返す。そうでない場合はfalseを返す。
     onFirstPlayer(){
         if (this.players[0] === this.getTurnPlayer()){
