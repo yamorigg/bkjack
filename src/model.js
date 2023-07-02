@@ -4,7 +4,7 @@ class Table{
     //betDominations : 配列。各要素はベットできるチップの単位
     //numberOfPlayers : テーブルに参加するプレイヤーの数
     //human: プレイヤーが人間かどうか表す。値がnullもしくは'ai'の場合はAIとして扱う
-    constructor(numberOfPlayers, human ,gameType, betDominations = [1, 5, 10, 25, 100]){
+    constructor(human ,gameType, betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 2){
         this.gameType = gameType;
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
@@ -12,6 +12,7 @@ class Table{
         this.human = human;
         this.numberOfPlayers = numberOfPlayers;
         this.house = new Player('house', 'house', this.gameType);
+        //gamePhaseはゲームの進行状況を表す。betting, playerTurn, houseTurn, roundOverのいずれかの値を取る
         this.gamePhase = 'betting';
         this.resultLog = [];
         }
@@ -31,7 +32,7 @@ class Table{
         }else{
             players.push(new Player(this.human, 'human', this.gameType));
         }
-        //this.numberOfPlayersの数だけプレイヤーを追加する。
+        //最初に足したプレイヤーとthis.numberOfPlayersの数だけプレイヤーを追加する。
         for (let i = 1; i < this.numberOfPlayers; i++){
             players.push(new Player('Player' + (i + 1), 'ai', this.gameType));
         } 
@@ -39,8 +40,7 @@ class Table{
     }
 
 
-    //playser: Player.promptPlayer()を使用してGameDecesionを取得。GameDecesionとgametypeに応じてPlayerの状態を更新する
-    //例：playerがhitを選択。手札が21を超える場合はbustとなり、gameStatusをbustに変更する
+
 
     //return string: 新しいターンが始まる直前の全プレイヤーの状態を表す文字列
     //このメソッドの出力は、各ラウンドの終了時にテーブルのresultLogメンバを更新するために使用される
@@ -50,7 +50,11 @@ class Table{
     //return null: デッキから2枚のカードを引き、プレイヤーの手札に加えることで全プレイヤーの状態を更新する。
     //プレイヤータイプがhouseの場合は、カードを伏せておく
     blackjackAssignPlayerHands(){
-
+        for (let i = 0; i < this.players.length; i++){
+            this.players[i].hand.push(this.deck.drawOne());
+            this.players[i].hand.push(this.deck.drawOne());
+        }
+        this.house.hand.push(this.deck.drawOne());
     }
 
     //return null: すべてのプレイヤーの状態を更新する。手札の配列をemptyにし、betを0にする
@@ -58,17 +62,50 @@ class Table{
     }
 
     //return Player: 現在のプレイヤーを返す
+    //現在のプレイヤーはplayers配列のgameStatusがbettingの状態である。findIndexを使用することで最初の'betting'のプレイヤーを取得する
     getTurnPlayer(){
-
+        let currentPlayerindex = this.players.findIndex(player => player.gameStatus === 'betting' );
+        return this.players[currentPlayerindex];
     }
 
     //reutrn null:テーブルの状態を更新する。
+    //gamePhaseがbettingの場合は、現在のプレイヤーのbetを更新し、次のプレイヤーに移る。最後のプレイヤーの場合は、gamePhaseをplayerTurnに更新すると同時にblackjackAssignPlayerHandsを使う。
+    //gamePhaseがplayerTurnの場合は、現在のプレイヤーのアクションをし、次のプレイヤーへ移る。最後のプレイヤーの場合はgamePhaseをhouseTurnに更新する。
+    //gamePhaseがhouseTurnの場合は、houseのアクションを行う。houseは手札の合計が17以上になると終了する。gamePhaseをroundOverに更新する。
+    //gamePhaseがroundOverの場合は、テーブルの状態を更新する。houseとの勝敗を判定し、プレイヤーの所持金を更新する。プレイヤーが勝利した場合はbetの2倍をPlayer.chipsに加える。引き分けの場合は何もしない。プレイヤーが敗北した場合はbetをPlayer.chipsから引く。プレイヤーの所持金が0になった場合は、players配列からプレイヤーを削除する。gamePhaseをbettingに更新する。
     haveTurn(userData){
-        
-    }
+        //現在のプレイヤーを取得する
+        let currentPlayer = this.getTurnPlayer();
+        if (this.gamePhase === 'betting'){
+            //現在のプレイヤーのbet額を更新する。
+            //プレイヤーの状態がbettingの場合は、promptPlayerを使用してbetを取得する
+            if (currentPlayer.gameStatus === 'betting'){
+                currentPlayer.bet = currentPlayer.promptPlayer(userData).amount;
+            }
 
-    evaluateMove(player){
-        let action = player.promptPlayer().action;
+        //テーブルの状態を更新する
+        //現在のプレイヤーが最後のプレイヤーの場合は、ゲームのフェーズを更新する
+        //現在のプレイヤーが最後のプレイヤーでない場合は、次のプレイヤーに移る
+        if (this.onLastPlayer()) {
+            if (this.gameType === 'blackjack'){
+               if (this.gamePhase === 'betting'){
+                     this.gamePhase = 'playerTurn';
+               }
+            }
+        
+        } else {
+            //次のプレイヤーに移る
+            currentPlayer = this.players[this.players.indexOf(currentPlayer) + 1];
+        }
+    }
+}
+
+    //playser: Player.promptPlayer()を使用してGameDecesionを取得。GameDecesionとgametypeに応じてPlayerの状態を更新する
+    //例：playerがhitを選択。手札が21を超える場合はbustとなり、gameStatusをbustに変更する
+    evaluateMove(player,userData){
+        let action = player.promptPlayer(userData).action;
+        //actionに応じてplayerの状態を更新する
+        //actionがhitの場合は、playerのhandにdeckから1枚カードを引く
         if (action === 'hit'){
             player.hand.push(this.deck.drawOne());
             if (this.gameType === 'blackjack'){
@@ -107,14 +144,8 @@ class Table{
 
     //return boolean: すべてのプレイヤー{'broken', 'bust', 'stand', 'surrender'}のいずれかの状態になっているかどうか
     allPlayerActionsResolved(){
-        for (let i = 0; i < this.players.length; i++){
+        for (let i = 0; i < this.players.length; i++){}
     }
-}
-
-
-
-
-
 }
 
 
@@ -131,6 +162,7 @@ class Player{
     }
     //Object userData: model.js外から渡される。nullになることもある。
     //GameDecisionオブジェクトを返す: 状態を考慮した上で、プレイヤーが行った意思決定。
+    //userData{action: 'hit', amount: 0}のような形式で渡される
     promptPlayer(userData){
         if (userData === null){
             //userDataがnullの場合は、AIの場合とする
@@ -162,14 +194,17 @@ class Player{
     }
     //AIのゲーム判断アルゴリズム
     aiDecide(){
+        let action = '';
+        let amount = 10;
         //手札の合計が17以上ならstand
         if (this.getHandScore() >= 17){
-            return 'stand';
+            action = 'stand';
         }
         //手札の合計が17未満ならhit
         else{
-            return 'hit';
+            action =  'hit';
         }
+        return {'action': action, 'amount': amount};
     }
 
 }
