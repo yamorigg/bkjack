@@ -4,7 +4,7 @@ class Table{
     //betDominations : 配列。各要素はベットできるチップの単位
     //numberOfPlayers : テーブルに参加するプレイヤーの数
     //human: プレイヤーが人間かどうか表す。値がnullもしくは'ai'の場合はAIとして扱う
-    constructor(human ,gameType, betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 2){
+    constructor(gameType, human ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 2){
         this.gameType = gameType;
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
@@ -44,7 +44,52 @@ class Table{
 
     //return string: 新しいターンが始まる直前の全プレイヤーの状態を表す文字列
     //このメソッドの出力は、各ラウンドの終了時にテーブルのresultLogメンバを更新するために使用される
+    //houseとの勝敗を判定し、プレイヤーの所持金を更新する。プレイヤーが勝利した場合はbetの2倍をPlayer.chipsに加える。引き分けの場合は何もしない。プレイヤーが敗北した場合はbetをPlayer.chipsから引く。プレイヤーの所持金が0になった場合は、players配列からプレイヤーを削除する。gamePhaseをbettingに更新する。
     blackjackEvaluateAndGetRoundResult(){
+        let roundResult = '';
+        for (let i = 0; i < this.players.length; i++){
+            let player = this.players[i];
+
+            if (player.gameStatus === 'stand' || player.gameStatus === 'double'){
+                let houseScore = this.house.getHandScore();
+                let playerScore = player.getHandScore();
+                if (houseScore > 21){
+                    player.gameStatus = 'win';
+                }else if (playerScore > houseScore){
+                    player.gameStatus = 'win';
+                }else if (playerScore === houseScore){
+                    player.gameStatus = 'draw';
+                }else{
+                    player.gameStatus = 'lose';
+                }
+            }
+
+
+            if (player.gameStatus === 'bust'){
+                roundResult += player.name + 'はバーストしました。';
+                player.chips -= player.bet;
+                if (player.chips <= 0){
+                    roundResult += player.name + 'は破産しました。';
+                    this.players.splice(i, 1);
+                }
+            }else if (player.gameStatus === 'blackjack'){
+                roundResult += player.name + 'はブラックジャックです。';
+                player.chips += player.bet;
+            }else if (player.gameStatus === 'win'){
+                roundResult += player.name + 'は勝ちました。';
+                player.chips += player.bet;
+            }else if (player.gameStatus === 'lose'){
+                roundResult += player.name + 'は負けました。';
+                player.chips -= player.bet;
+                if (player.chips <= 0){
+                    roundResult += player.name + 'は破産しました。';
+                    this.players.gameStatus = 'broken';
+                }
+            }else if (player.gameStatus === 'draw'){
+                roundResult += player.name + 'は引き分けです。';
+            }
+        }
+        return this.resultLog.push(roundResult);
     }
 
     //return null: デッキから2枚のカードを引き、プレイヤーの手札に加えることで全プレイヤーの状態を更新する。
@@ -59,12 +104,18 @@ class Table{
 
     //return null: すべてのプレイヤーの状態を更新する。手札の配列をemptyにし、betを0にする
     blackjackClearPlayerHandsAndBets(){
+        for (let i = 0; i < this.players.length; i++){
+            this.players[i].hand = [];
+            this.players[i].bet = 0;
+        }
+        this.house.hand = [];
+        this.gamePhase = 'betting';
     }
 
     //return Player: 現在のプレイヤーを返す
     //現在のプレイヤーはplayers配列のgameStatusがbettingの状態である。findIndexを使用することで最初の'betting'のプレイヤーを取得する
-    getTurnPlayer(){
-        let currentPlayerindex = this.players.findIndex(player => player.gameStatus === 'betting' );
+    getTurnPlayer(action){
+        let currentPlayerindex = this.players.findIndex(player => player.gameStatus === action );
         return this.players[currentPlayerindex];
     }
 
@@ -74,29 +125,56 @@ class Table{
     //gamePhaseがhouseTurnの場合は、houseのアクションを行う。houseは手札の合計が17以上になると終了する。gamePhaseをroundOverに更新する。
     //gamePhaseがroundOverの場合は、テーブルの状態を更新する。houseとの勝敗を判定し、プレイヤーの所持金を更新する。プレイヤーが勝利した場合はbetの2倍をPlayer.chipsに加える。引き分けの場合は何もしない。プレイヤーが敗北した場合はbetをPlayer.chipsから引く。プレイヤーの所持金が0になった場合は、players配列からプレイヤーを削除する。gamePhaseをbettingに更新する。
     haveTurn(userData){
-        //現在のプレイヤーを取得する
-        let currentPlayer = this.getTurnPlayer();
         if (this.gamePhase === 'betting'){
+            //現在のプレイヤーを取得する
+            let currentPlayer = this.getTurnPlayer('betting');
             //現在のプレイヤーのbet額を更新する。
             //プレイヤーの状態がbettingの場合は、promptPlayerを使用してbetを取得する
             if (currentPlayer.gameStatus === 'betting'){
                 currentPlayer.bet = currentPlayer.promptPlayer(userData).amount;
+                currentPlayer.gameStatus = 'playing';
             }
+        
+        } else if (this.gamePhase === 'playerTurn'){
+            //現在のプレイヤーを取得する
+            let currentPlayer = this.getTurnPlayer('playing');
+            //現在のプレイヤーのアクションを実行する。
+            //プレイヤーの状態がplayingの場合は、promptPlayerを使用してアクションを取得する
+            if (currentPlayer.gameStatus === 'playing'){
+                currentPlayer.promptPlayer(userData);
+            }
+        }else if (this.gamePhase === 'houseTurn'){
+            this.house.promptPlayer(userData);
 
+        }else if (this.gamePhase === 'roundOver'){
+            this.blackjackEvaluateAndGetRoundResult();
+        }
         //テーブルの状態を更新する
         //現在のプレイヤーが最後のプレイヤーの場合は、ゲームのフェーズを更新する
         //現在のプレイヤーが最後のプレイヤーでない場合は、次のプレイヤーに移る
         if (this.onLastPlayer()) {
             if (this.gameType === 'blackjack'){
-               if (this.gamePhase === 'betting'){
-                     this.gamePhase = 'playerTurn';
-               }
-            }
-        
-        } else {
+                switch(this.gamePhase){
+                    case 'betting':
+                        this.gamePhase = 'playerTurn';
+                        this.blackjackAssignPlayerHands();
+                        break;
+                    case 'playerTurn':
+                        this.gamePhase = 'houseTurn';
+                        break;
+                    case 'houseTurn':
+                        this.gamePhase = 'roundOver';
+                        break;
+                    case 'roundOver':
+                        this.blackjackEvaluateAndGetRoundResult();
+                        this.blackjackClearPlayerHandsAndBets();
+                        this.gamePhase = 'betting';
+                        break;
+                }
+            } else {
             //次のプレイヤーに移る
             currentPlayer = this.players[this.players.indexOf(currentPlayer) + 1];
-        }
+            }
     }
 }
 
@@ -122,7 +200,6 @@ class Table{
             player.bet *= 2;
             player.gameStatus = 'stand';
     }
-
 }
     //return booelan:テーブルがプレイヤー配列の最初のプレイヤーを指しているかときはtrueを返す。そうでない場合はfalseを返す。
     onFirstPlayer(){
@@ -139,12 +216,17 @@ class Table{
             return true;
         }else{
             return false;
-    }
+        }
     }
 
     //return boolean: すべてのプレイヤー{'broken', 'bust', 'stand', 'surrender'}のいずれかの状態になっているかどうか
     allPlayerActionsResolved(){
-        for (let i = 0; i < this.players.length; i++){}
+        for (let i = 0; i < this.players.length; i++){
+            if (this.players[i].gameStatus === 'betting'){
+                return false;
+            }
+        }
+        return true;
     }
 }
 
@@ -172,7 +254,6 @@ class Player{
     }
     //合計が21を超える場合は、手札のAを、合計が21以下になるまで1として扱う
     getHandScore(){
-        //手札の合計を計算する
         let score = 0;
         //Aの枚数を数える
         let aceCount = 0;
@@ -303,7 +384,7 @@ String rank : {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"}
 
 let table1 = new Table('blackjack');
 while(table1.gamePhase !== 'roundOver'){
-    table1.haveTruen();
+    table1.haveTurn();
 }
 
 console.log(table1.resultLog);
