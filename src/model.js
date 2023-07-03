@@ -119,7 +119,7 @@ class Table{
         return this.players[currentPlayerindex];
     }
 
-    //reutrn null:テーブルの状態を更新する。
+    //reutrn null:テーブルの状態を更新する
     //gamePhaseがbettingの場合は、現在のプレイヤーのbetを更新し、次のプレイヤーに移る。最後のプレイヤーの場合は、gamePhaseをplayerTurnに更新すると同時にblackjackAssignPlayerHandsを使う。
     //gamePhaseがplayerTurnの場合は、現在のプレイヤーのアクションをし、次のプレイヤーへ移る。最後のプレイヤーの場合はgamePhaseをhouseTurnに更新する。
     //gamePhaseがhouseTurnの場合は、houseのアクションを行う。houseは手札の合計が17以上になると終了する。gamePhaseをroundOverに更新する。
