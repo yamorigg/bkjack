@@ -152,9 +152,11 @@ class Table{
                 this.evaluateMove(currentPlayer);
             }
         }else if (this.gamePhase === 'houseTurn'){
-            this.house.promptPlayer(userData);
-            this.evaluateMove(this.house);
-
+            lastPlayer = true;
+            while (this.house.gameStatus === 'playing' || this.house.gameStatus === 'hit'){
+                this.house.gameStatus = this.house.promptPlayer(userData).action;
+                this.evaluateMove(this.house);
+            }
         }else if (this.gamePhase === 'roundOver'){
             this.blackjackEvaluateAndGetRoundResult();
         }
