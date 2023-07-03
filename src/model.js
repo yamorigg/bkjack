@@ -4,17 +4,17 @@ class Table{
     //betDominations : 配列。各要素はベットできるチップの単位
     //numberOfPlayers : テーブルに参加するプレイヤーの数
     //human: プレイヤーが人間かどうか表す。値がnullもしくは'ai'の場合はAIとして扱う
-    constructor(gameType, human ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 2){
+    constructor(gameType, human = null ,betDominations = [1, 5, 10, 25, 100]){
         this.gameType = gameType;
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
-        this.players = this.addPlayers();
         this.human = human;
-        this.numberOfPlayers = numberOfPlayers;
+        this.numberOfPlayers = 1;
         this.house = new Player('house', 'house', this.gameType);
         //gamePhaseはゲームの進行状況を表す。betting, playerTurn, houseTurn, roundOverのいずれかの値を取る
         this.gamePhase = 'betting';
         this.resultLog = [];
+        this.players = this.addPlayers();
         }
 
     /*プレイヤーをplayers配列に追加する。
@@ -114,8 +114,8 @@ class Table{
 
     //return Player: 現在のプレイヤーを返す
     //現在のプレイヤーはplayers配列のgameStatusがbettingの状態である。findIndexを使用することで最初の'betting'のプレイヤーを取得する
-    getTurnPlayer(action){
-        let currentPlayerindex = this.players.findIndex(player => player.gameStatus === action );
+    getTurnPlayer(status){
+        let currentPlayerindex = this.players.findIndex(player => player.gameStatus === status );
         return this.players[currentPlayerindex];
     }
 
@@ -125,9 +125,13 @@ class Table{
     //gamePhaseがhouseTurnの場合は、houseのアクションを行う。houseは手札の合計が17以上になると終了する。gamePhaseをroundOverに更新する。
     //gamePhaseがroundOverの場合は、テーブルの状態を更新する。houseとの勝敗を判定し、プレイヤーの所持金を更新する。プレイヤーが勝利した場合はbetの2倍をPlayer.chipsに加える。引き分けの場合は何もしない。プレイヤーが敗北した場合はbetをPlayer.chipsから引く。プレイヤーの所持金が0になった場合は、players配列からプレイヤーを削除する。gamePhaseをbettingに更新する。
     haveTurn(userData){
+        let searchStatus = 'None';
+        let lastPlayer ;
         if (this.gamePhase === 'betting'){
+            searchStatus = 'betting'
+            lastPlayer = this.onLastPlayer(searchStatus);
             //現在のプレイヤーを取得する
-            let currentPlayer = this.getTurnPlayer('betting');
+            let currentPlayer = this.getTurnPlayer(searchStatus);
             //現在のプレイヤーのbet額を更新する。
             //プレイヤーの状態がbettingの場合は、promptPlayerを使用してbetを取得する
             if (currentPlayer.gameStatus === 'betting'){
@@ -136,15 +140,20 @@ class Table{
             }
         
         } else if (this.gamePhase === 'playerTurn'){
+            searchStatus = 'playing'
+            lastPlayer = this.onLastPlayer(searchStatus);
             //現在のプレイヤーを取得する
-            let currentPlayer = this.getTurnPlayer('playing');
+            let currentPlayer = this.getTurnPlayer(searchStatus);
             //現在のプレイヤーのアクションを実行する。
             //プレイヤーの状態がplayingの場合は、promptPlayerを使用してアクションを取得する
-            if (currentPlayer.gameStatus === 'playing'){
-                currentPlayer.promptPlayer(userData);
+            //取得したactionをevaluateMoveに渡す。currentPlayerのgameStatusがstandかbustになるまで繰り返す。
+            while (currentPlayer.gameStatus === 'playing' || currentPlayer.gameStatus === 'hit'){
+                currentPlayer.gameStatus = currentPlayer.promptPlayer(userData).action;
+                this.evaluateMove(currentPlayer);
             }
         }else if (this.gamePhase === 'houseTurn'){
             this.house.promptPlayer(userData);
+            this.evaluateMove(this.house);
 
         }else if (this.gamePhase === 'roundOver'){
             this.blackjackEvaluateAndGetRoundResult();
@@ -152,7 +161,7 @@ class Table{
         //テーブルの状態を更新する
         //現在のプレイヤーが最後のプレイヤーの場合は、ゲームのフェーズを更新する
         //現在のプレイヤーが最後のプレイヤーでない場合は、次のプレイヤーに移る
-        if (this.onLastPlayer()) {
+        if (lastPlayer) {
             if (this.gameType === 'blackjack'){
                 switch(this.gamePhase){
                     case 'betting':
@@ -180,15 +189,18 @@ class Table{
 
     //playser: Player.promptPlayer()を使用してGameDecesionを取得。GameDecesionとgametypeに応じてPlayerの状態を更新する
     //例：playerがhitを選択。手札が21を超える場合はbustとなり、gameStatusをbustに変更する
-    evaluateMove(player,userData){
-        let action = player.promptPlayer(userData).action;
+    evaluateMove(player){
+        let action = player.gameStatus;
         //actionに応じてplayerの状態を更新する
         //actionがhitの場合は、playerのhandにdeckから1枚カードを引く
         if (action === 'hit'){
             player.hand.push(this.deck.drawOne());
             if (this.gameType === 'blackjack'){
-                if (player.handTotal() > 21){
+                if (player.getHandScore() > 21){
                     player.gameStatus = 'bust';
+                }
+                else{
+                    player.gameStatus = 'playing';
                 }
             }
         }else if (action === 'stand'){
@@ -202,17 +214,17 @@ class Table{
     }
 }
     //return booelan:テーブルがプレイヤー配列の最初のプレイヤーを指しているかときはtrueを返す。そうでない場合はfalseを返す。
-    onFirstPlayer(){
-        if (this.players[0] === this.getTurnPlayer()){
+    onFirstPlayer(status){
+        if (this.players[0] === this.getTurnPlayer(status)){
             return true;
         }else{
             return false;
         }
     }
 
-    //return boolean:テーブルがプレイヤー配列の最+後のプレイヤーを指しているかときはtrueを返す。そうでない場合はfalseを返す。
-    onLastPlayer(){
-        if (this.players[this.players.length - 1] === this.getTurnPlayer()){
+    //return boolean:テーブルがプレイヤー配列の最後のプレイヤーを指しているかときはtrueを返す。そうでない場合はfalseを返す。
+    onLastPlayer(status){
+        if (this.players[this.players.length - 1] === this.getTurnPlayer(status)){
             return true;
         }else{
             return false;
@@ -245,7 +257,7 @@ class Player{
     //Object userData: model.js外から渡される。nullになることもある。
     //GameDecisionオブジェクトを返す: 状態を考慮した上で、プレイヤーが行った意思決定。
     //userData{action: 'hit', amount: 0}のような形式で渡される
-    promptPlayer(userData){
+    promptPlayer(userData = null){
         if (userData === null){
             //userDataがnullの場合は、AIの場合とする
             userData = this.aiDecide();
@@ -278,7 +290,7 @@ class Player{
         let action = '';
         let amount = 10;
         //手札の合計が17以上ならstand
-        if (this.getHandScore() >= 17){
+        if (this.gameStatus === 'playing' && this.getHandScore() >= 17){
             action = 'stand';
         }
         //手札の合計が17未満ならhit
