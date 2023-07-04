@@ -9,7 +9,7 @@ class Table{
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
         this.human = human;
-        this.numberOfPlayers = 1;
+        this.numberOfPlayers = 3;
         this.house = new Player('house', 'house', this.gameType);
         //gamePhaseはゲームの進行状況を表す。betting, playerTurn, houseTurn, roundOverのいずれかの値を取る
         this.gamePhase = 'betting';
@@ -109,7 +109,6 @@ class Table{
             this.players[i].bet = 0;
         }
         this.house.hand = [];
-        this.gamePhase = 'betting';
     }
 
     //return Player: 現在のプレイヤーを返す
@@ -171,14 +170,15 @@ class Table{
                         this.blackjackAssignPlayerHands();
                         break;
                     case 'playerTurn':
+                        this.house.gameStatus = 'playing'
                         this.gamePhase = 'houseTurn';
                         break;
                     case 'houseTurn':
                         this.gamePhase = 'roundOver';
-                        break;
-                    case 'roundOver':
                         this.blackjackEvaluateAndGetRoundResult();
                         this.blackjackClearPlayerHandsAndBets();
+                        break;
+                    case 'roundOver':
                         this.gamePhase = 'betting';
                         break;
                 }
@@ -291,6 +291,17 @@ class Player{
     aiDecide(){
         let action = '';
         let amount = 10;
+        //hoseの場合は、手札の合計が17以上ならstand、17未満ならhit
+        if (this.type === 'house'){
+            if (this.getHandScore() >= 17){
+                action = 'stand';
+            }else{
+                action = 'hit';
+            }
+            return {'action': action, 'amount': amount};
+        }
+
+
         //手札の合計が17以上ならstand
         if (this.gameStatus === 'playing' && this.getHandScore() >= 17){
             action = 'stand';
