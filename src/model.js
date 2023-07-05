@@ -4,12 +4,12 @@ class Table{
     //betDominations : 配列。各要素はベットできるチップの単位
     //numberOfPlayers : テーブルに参加するプレイヤーの数
     //human: プレイヤーが人間かどうか表す。値がnullもしくは'ai'の場合はAIとして扱う
-    constructor(gameType, human = null ,betDominations = [1, 5, 10, 25, 100]){
+    constructor(gameType, human = null ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 2){
         this.gameType = gameType;
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
         this.human = human;
-        this.numberOfPlayers = 3;
+        this.numberOfPlayers = numberOfPlayers;
         this.house = new Player('house', 'house', this.gameType);
         //gamePhaseはゲームの進行状況を表す。betting, playerTurn, houseTurn, roundOverのいずれかの値を取る
         this.gamePhase = 'betting';
@@ -53,7 +53,10 @@ class Table{
             if (player.gameStatus === 'stand' || player.gameStatus === 'double'){
                 let houseScore = this.house.getHandScore();
                 let playerScore = player.getHandScore();
-                if (houseScore > 21){
+                if (playerScore === 21){
+                    player.gameStatus = 'blackjack';
+                }
+                else if (houseScore > 21){
                     player.gameStatus = 'win';
                 }else if (playerScore > houseScore){
                     player.gameStatus = 'win';
