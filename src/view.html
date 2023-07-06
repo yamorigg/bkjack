@@ -34,12 +34,13 @@
 </body>
 <script text="text/javascript">
     document.getElementById("startGame").addEventListener("click", () => {
-    // let table = new Model.Table("blackjack");
-    // table.haveTurn();
-    renderTable();
+        let table = new Table("blackjack");
+        table.haveTurn();
+    renderTable(table);
+    console.log(table);
 });
 
-renderTable = (table) => {
+function renderTable(table){
     let gameDiv = document.getElementById("gameDiv");
     gameDiv.innerHTML =`
     <!-- all cards (dealer, players) div -->
@@ -49,260 +50,102 @@ renderTable = (table) => {
 
             <!-- House Card Row -->
             <div id="houesCardDiv" class="d-flex justify-content-center pt-3 pb-5">
-
-                <div class="bg-white border mx-2">
-                    <div class="text-center">
-                        <img src="./img/spade.png" alt="" width="50" height="50">
-                    </div>
-                    <div class="text-center">
-                        <p class="m-0 ">7</p>
-                    </div>
-                </div>
-
-                <div class="bg-white border mx-2">
-                    <div class="text-center">
-                        <img src="./img/diamond.png" alt="" width="50" height="50">
-                    </div>
-                    <div class="text-center">
-                        <p class="m-0">8</p>
-                    </div>
-                </div>
-
-                <div class="bg-white border mx-2">
-                    <div class="text-center">
-                        <img src="./img/heart.png" alt="" width="50" height="50">
-                    </div>
-                    <div class="text-center">
-                        <p class="m-0">9</p>
-                    </div>
-                </div>
+                ${renderCards(table.house.hand)}
             </div>
         </div>
 
         <div class="">
 
             <!-- Players Div -->
-            <div id="playersDiv" class="d-flex justify-content-center">
-
-                <!-- nonCurPlayerDiv 1-->
-                <div id="nonCurPlayer1Div" class="flex-column">
-
-                    <p class="m-0 text-white text-center rem3">ai1</p>
-
-                    <!-- playerInfoDiv -->
-                    <div class="text-white d-flex m-0 p-0 justify-content-between">
-                        <p class="rem1 text-left">S:BUST </a>
-                        <p class="rem1 text-left">B:0 </a>
-                        <p class="rem1 text-left">R:255 </a>
-                    </div>
-                    <!-- cardsDiv -->
-                    <div class="d-flex justify-content-center">
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/heart.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">2</p>
-                            </div>
-                        </div>
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/clover.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">10</p>
-                            </div>
-                        </div>
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/spade.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">8</p>
-                            </div>
-                        </div><!-- end card -->
-                    </div><!-- end Cards -->
-                </div><!-- end player -->
-
-                <!-- curPlayerDiv -->
-                <div id = "curPlayerDiv" class="flex-column w-50">
-                    <p class="m-0 text-white text-center rem3">ai2</p>
-
-                    <!-- playerInfoDiv -->
-                    <div class="text-white d-flex m-0 p-0 justify-content-center">
-                        <p class="rem1 text-left">S:BUST </a>
-                        <p class="rem1 text-left">B:0 </a>
-                        <p class="rem1 text-left">R:255 </a>
-                    </div>
-
-                    <!-- cardsDiv -->
-                    <div class="d-flex justify-content-center">
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/heart.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">2</p>
-                            </div>
-                        </div>
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/clover.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">10</p>
-                            </div>
-                        </div>
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/spade.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">8</p>
-                            </div>
-                        </div><!-- end card -->
-                    </div><!-- end Cards -->
-                </div><!-- end player -->
-
-                <!-- nonCurPlayer2Div -->
-                <div id="nonCurPlayer2Div" class="flex-column">
-
-                    <p class="m-0 text-white text-center rem3">Yuki</p>
-
-                    <!-- playerInfoDiv -->
-                    <div class="text-white d-flex m-0 p-0 justify-content-between">
-                        <p class="rem1 text-left">S:BUST </a>
-                        <p class="rem1 text-left">B:0 </a>
-                        <p class="rem1 text-left">R:255 </a>
-                    </div>
-
-                    <!-- cardsDiv -->
-                    <div class="d-flex justify-content-center">
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/heart.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">2</p>
-                            </div>
-                        </div>
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/clover.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">10</p>
-                            </div>
-                        </div>
-                        <div class="bg-white border mx-2">
-                            <div class="text-center">
-                                <img src="./img/spade.png" alt="" width="50" height="50">
-                            </div>
-                            <div class="text-center">
-                                <p class="m-0">8</p>
-                            </div>
-                        </div><!-- end card -->
-                    </div><!-- end Cards -->
-                </div><!-- end player -->
+            <div id="playersDiv" class="d-flex justify-content-between w-100">
+                ${renderPlayers(table)}
             </div><!-- end players -->
 
             <!-- actionsAndBetsDiv -->
             <div id="actionsAndBetsDiv" class="d-flex pb-5 pt-4 justify-content-center">
-            !-- betsDiv -->
                 <div id="betsDiv" class="d-flex flex-column w-50">
-                    <!-- bottom half of bets including chip increments and submit  -->
-                    <div class="py-2 h-60 d-flex justify-content-between">
-                        <!-- betChoiceDiv -->
-                        <div>
-                            <div class="input-group" >
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-danger btn-number">
-                                        -
-                                    </button>
-                                </span>
-                                <input type="text" class="input-number text-center" size="2" maxlength="5" value="3">
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-success btn-number">
-                                        +
-                                    </button>
-                                </span>
-                            </div><!--end input group div -->
-                            <p class="text-white text-center">5</p>
-                        </div> <!-- end betChoiceDiv -->
-                        <!-- betChoiceDiv -->
-                        <div>
-                            <div class="input-group" >
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-danger btn-number">
-                                        -
-                                    </button>
-                                </span>
-                                <input type="text" class="input-number text-center" size="2" maxlength="5" value="0">
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-success btn-number">
-                                        +
-                                    </button>
-                                </span>
-                            </div><!--end input group div -->
-                            <p class="text-white text-center">20</p>
-                        </div> <!-- end betChoiceDiv -->
-                        <!-- betChoiceDiv -->
-                        <div>
-                            <div class="input-group" >
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-danger btn-number">
-                                        -
-                                    </button>
-                                </span>
-                                <input type="text" class="input-number text-center" size="2" maxlength="5" value="0">
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-success btn-number">
-                                        +
-                                    </button>
-                                </span>
-                            </div><!--end input group div -->
-                            <p class="text-white text-center">50</p>
-                        </div> <!-- end betChoiceDiv -->
-                        <!-- betChoiceDiv -->
-                        <div>
-                            <div class="input-group" >
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-danger btn-number">
-                                        -
-                                    </button>
-                                </span>
-                                <input type="text" class="input-number text-center" size="2" maxlength="5" value="0">
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-success btn-number">
-                                        +
-                                    </button>
-                                </span>
-                            </div><!--end input group div -->
-                            <p class="text-white text-center">100</p>
-                        </div> <!-- end betChoiceDiv -->
-                    </div><!-- end bestSelectionDiv -->
-                    <!-- betSubmitDiv -->
-                    <div class="w-100 btn-success rem5 text-center bg-primary">
-                        Submit your bet
-                    </div><!-- end betSubmitDiv -->
-                </div><!-- end betsDiv-->
-
+                    <div class="d-flex justify-content-around">
+                        ${renderActionsAndBets(table)}
+                    </div>
+                </div>
             </div><!-- end actionsAndBetsDiv-->
         </div>
     </div>
 
     `;
-};
+}
 
+function renderCards(hands){
+    let cardsDiv = "";
+    if (hands.length === 0){
+        hands = [new Card('questionMark', '?'), new Card('questionMark', '?')];
+    }
+    for (let card of hands){
+            
+        cardsDiv += `
+        <div class="bg-white border mx-2">
+                <div class="text-center">
+                    <img src="./img/${card.suit}.png" alt="" width="50" height="50">
+                </div>
+                <div class="text-center">
+                    <p class="m-0">${card.rank}</p>
+                </div>
+            </div>
+        `;
+    }
+    return cardsDiv;
+}
 
+function renderPlayers(table){
+    let playersDiv = "";
+    let players = table.players;
+    for (let player of players) {
+        playersDiv += `
+            <div class="flex-column w-25">
+                <p class="m-0 text-white text-center h2">${player.name}</p>
+                <p class="text-white  text-center m-0 h6">S: ${player.gameStatus}    B: ${player.bet}    R: ${player.chips}</p>
+                <div class="d-flex justify-content-center m-2">
+                    ${renderCards(player.hand)}
+                </div>
+            </div>
+        `;
+    }
+    return playersDiv;
+}
 
+function renderActionsAndBets(table){
+    betsDiv = "";
+    let bets = table.betDominations;
+    for (let bet of bets){
+        betsDiv += `
+                        <!-- betChoiceDiv -->
+                        <div>
+                            <div class="input-group" >
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-danger btn-number">
+                                        -
+                                    </button>
+                                </span>
+                                <span class="bg-white">0</span>
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-success btn-number">
+                                        +
+                                    </button>
+                                </span>
+                            </div><!--end input group div -->
+                            <p class="text-white text-center">${bet}</p>
+                        </div> <!-- end betChoiceDiv -->
+        `;
+    }
+    return betsDiv;
+}
 //一連の進行を管理するクラス.
 class Table{
     //gameType : ゲームの種類
     //betDominations : 配列。各要素はベットできるチップの単位
     //numberOfPlayers : テーブルに参加するプレイヤーの数
     //human: プレイヤーが人間かどうか表す。値がnullもしくは'ai'の場合はAIとして扱う
-    constructor(gameType, human = null ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 1){
+    constructor(gameType, human = null ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 3){
         this.gameType = gameType;
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
@@ -544,7 +387,6 @@ class Table{
         return true;
     }
 }
-
 
 class Player{
     constructor(name , type, gameType, chips = 400){
