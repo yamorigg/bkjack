@@ -62,9 +62,9 @@ function renderTable(table){
             </div><!-- end players -->
 
             <!-- actionsAndBetsDiv -->
-            <div id="actionsAndBetsDiv" class="d-flex pb-5 pt-4 justify-content-center">
+            <div id="actionsAndBetsDiv" class="d-flex justify-content-center mt-3">
                 <div id="betsDiv" class="d-flex flex-column w-50">
-                    <div class="d-flex justify-content-around">
+                   
                         ${renderActionsAndBets(table)}
                     </div>
                 </div>
@@ -114,10 +114,11 @@ function renderPlayers(table){
 }
 
 function renderActionsAndBets(table){
-    betsDiv = "";
+    betsDiv = ' <div class="d-flex justify-content-around">';
     let bets = table.betDominations;
     for (let bet of bets){
         betsDiv += `
+                    <div class="d-flex flex-column">
                         <div>
                             <div class="input-group" >
                                 <span class="input-group-btn">
@@ -134,12 +135,14 @@ function renderActionsAndBets(table){
                             </div><!--end input group div -->
                             <p class="text-white text-center">${bet}</p>
                         </div>
+                    </div>
         `;
                     }
     betsDiv += `
-    <div  id="submitDiv" class="btn bg-primary">
-    Submit your bet
     </div>
+        <div  id="submitDiv" class="btn bg-primary">
+        Submit your bet
+        </div>
     `;
     
     return betsDiv;
