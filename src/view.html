@@ -118,7 +118,6 @@ function renderActionsAndBets(table){
     let bets = table.betDominations;
     for (let bet of bets){
         betsDiv += `
-                        <!-- betChoiceDiv -->
                         <div>
                             <div class="input-group" >
                                 <span class="input-group-btn">
@@ -134,9 +133,15 @@ function renderActionsAndBets(table){
                                 </span>
                             </div><!--end input group div -->
                             <p class="text-white text-center">${bet}</p>
-                        </div> <!-- end betChoiceDiv -->
+                        </div>
         `;
-    }
+                    }
+    betsDiv += `
+    <div  id="submitDiv" class="btn bg-primary">
+    Submit your bet
+    </div>
+    `;
+    
     return betsDiv;
 }
 //一連の進行を管理するクラス.
