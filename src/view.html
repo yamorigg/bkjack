@@ -36,12 +36,44 @@
     document.getElementById("startGame").addEventListener("click", () => {
         let playerName = document.getElementById("playerName").value;
         let table = new Table("blackjack", playerName);
-        table.haveTurn();
-    renderTable(table);
-    
-
-    
+        console.log(table.players)
+        renderTable(table);
+        playGame(table);
 });
+
+function playGame(table){
+    if (table.gameStatus === 'roundOver'){
+        return;
+    }
+    //player.typeがaiの場合は自動でbetを行う
+    if (table.getTurnPlayer(table.gamePhase).type === 'ai'){
+        console.log( "aiのターンです");
+        //1秒待機
+        setTimeout(() => {
+            table.haveTurn();
+            renderTable(table);
+            playGame(table);
+        }, 1000);
+    }
+    //player.typeがhumanの場合はボタンを表示
+    else if (table.getTurnPlayer(table.gamePhase).type === 'human'){
+        console.log("playerのターンです");
+        let betsDiv = document.getElementById("betsDiv");
+        //betsDivにrenderBetsを実行してボタンを表示
+        betsDiv.innerHTML = renderBets(table);
+        document.getElementById("submitDiv").addEventListener("click", () => {
+        let bets = document.querySelectorAll(".bg-white");
+
+        table.haveTurn();
+        renderTable(table);
+        playGame(table);
+    });
+    }
+    else{
+        console.log('error');
+    }
+}
+
 
 
 function renderTable(table){
@@ -68,8 +100,7 @@ function renderTable(table){
             <!-- actionsAndBetsDiv -->
             <div id="actionsAndBetsDiv" class="d-flex justify-content-center mt-3">
                 <div id="betsDiv" class="d-flex flex-column w-50">
-                   
-                        ${renderBets(table)}
+
                     </div>
                 </div>
             </div><!-- end actionsAndBetsDiv-->
@@ -108,7 +139,7 @@ function renderPlayers(table){
         playersDiv += `
             <div class="flex-column w-25">
                 <p class="m-0 text-white text-center h2">${player.name}</p>
-                <p class="text-white  text-center m-0 h6">S: ${player.gameStatus}    B: ${player.bet}    R: ${player.chips}</p>
+                <p class="text-white  text-center m-0 h6">S: ${player.gameStatus}    B: ${player.bet}    C: ${player.chips}</p>
                 <div class="d-flex justify-content-center m-2">
                     ${renderCards(player.hand)}
                 </div>
@@ -118,10 +149,11 @@ function renderPlayers(table){
     return playersDiv;
 }
 
-function renderBets(table){
-    betsDiv = ' <div class="d-flex justify-content-around">';
-    let bets = table.betDominations;
-    for (let bet of bets){
+function renderBets(table){ 
+        betsDiv = ' <div class="d-flex justify-content-around">';
+        let bets = table.betDominations;
+
+        for (let bet of bets){
         betsDiv += `
                     <div class="d-flex flex-column">
                         <div>
@@ -149,9 +181,11 @@ function renderBets(table){
         Submit your bet
         </div>
     `;
-    
+
     return betsDiv;
-}
+    }
+
+
 
 function btnNumberEvent(table){
     let btnSuccessList = document.querySelectorAll(".btn-success");
@@ -164,10 +198,11 @@ function btnNumberEvent(table){
             let bet = eventTarget.parentElement.parentElement.querySelector(".bg-white");
             let currentValue = parseInt(bet.textContent);
             let newValue = currentValue + 1;
-            bet.textContent = newValue;
+
             
+            bet.textContent = newValue;
         });
-        
+
     });
     let btnDangerList = document.querySelectorAll(".btn-danger");
     btnDangerList.forEach((btnDanger) =>{
