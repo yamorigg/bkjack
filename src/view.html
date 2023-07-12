@@ -61,8 +61,9 @@ function playGame(table){
         let betsDiv = document.getElementById("betsDiv");
         //betsDivにrenderBetsを実行してボタンを表示
         betsDiv.innerHTML = renderBets(table);
+        btnNumberEvent(table);
         document.getElementById("submitDiv").addEventListener("click", () => {
-        let bets = document.querySelectorAll(".bg-white");
+        let userData = {'action': "", 'amount': ''}
 
         table.haveTurn();
         renderTable(table);
@@ -108,7 +109,7 @@ function renderTable(table){
     </div>
 
     `;
-    btnNumberEvent(table);
+    
 }
 
 function renderCards(hands){
@@ -181,7 +182,7 @@ function renderBets(table){
         Submit your bet
         </div>
     `;
-
+    
     return betsDiv;
     }
 
@@ -289,29 +290,33 @@ class Table{
                 }
             }
 
-
+            //プレイヤーの所持金を更新する
             if (player.gameStatus === 'bust'){
                 roundResult += player.name + 'はバーストしました。';
-                player.chips -= player.bet;
                 if (player.chips <= 0){
                     roundResult += player.name + 'は破産しました。';
-                    this.players.splice(i, 1);
+                    this.players.gameStatus = 'broken';
+
                 }
             }else if (player.gameStatus === 'blackjack'){
                 roundResult += player.name + 'はブラックジャックです。';
-                player.chips += player.bet;
+                player.chips += player.bet * 2;
             }else if (player.gameStatus === 'win'){
                 roundResult += player.name + 'は勝ちました。';
-                player.chips += player.bet;
+                player.chips += player.bet * 2;
             }else if (player.gameStatus === 'lose'){
                 roundResult += player.name + 'は負けました。';
-                player.chips -= player.bet;
                 if (player.chips <= 0){
                     roundResult += player.name + 'は破産しました。';
                     this.players.gameStatus = 'broken';
                 }
             }else if (player.gameStatus === 'draw'){
                 roundResult += player.name + 'は引き分けです。';
+                player.chips += player.bet;
+            }
+            //プレイヤーの状態をbettingに戻す
+            if (player.gameStatus !== 'broken'){
+                player.gameStatus = 'betting';
             }
         }
         return this.resultLog.push(roundResult);
@@ -386,7 +391,6 @@ class Table{
         }
         //テーブルの状態を更新する
         //現在のプレイヤーが最後のプレイヤーの場合は、ゲームのフェーズを更新する
-        //現在のプレイヤーが最後のプレイヤーでない場合は、次のプレイヤーに移る
         if (lastPlayer) {
             if (this.gameType === 'blackjack'){
                 switch(this.gamePhase){
@@ -406,12 +410,9 @@ class Table{
                     case 'roundOver':
                         this.gamePhase = 'betting';
                         break;
-                }
-            } else {
-            //次のプレイヤーに移る
-            currentPlayer = this.players[this.players.indexOf(currentPlayer) + 1];
-            }
-    }
+                    }
+                } 
+            }    
 }
 
     //playser: Player.promptPlayer()を使用してGameDecesionを取得。GameDecesionとgametypeに応じてPlayerの状態を更新する
@@ -487,6 +488,8 @@ class Player{
         if (userData === null){
             //userDataがnullの場合は、AIの場合とする
             userData = this.aiDecide();
+            this.bet = userData.amount;
+            this.chips -= userData.amount;
         }
         return new GameDecision(userData.action, userData.amount);
     }
