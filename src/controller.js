@@ -1,11 +1,12 @@
 
 export class GameCon{
     static playGame(table){
+        Render.renderTable(table);
     if (table.gameStatus === 'roundOver'){
         return;
     }
     //houseのターンの場合の処理
-
+    console.log(table)
     //player.typeがaiの場合は自動でbetを行う
     if (table.getTurnPlayer(table.gamePhase).type === 'ai'){
         console.log( "aiのターンです");
@@ -19,18 +20,39 @@ export class GameCon{
     //player.typeがhumanの場合はボタンを表示
     else if (table.getTurnPlayer(table.gamePhase).type === 'human'){
         console.log("playerのターンです");
-        let betsDiv = document.getElementById("betsDiv");
-        //betsDivにrenderBetsを実行してボタンを表示
-        betsDiv.innerHTML = Render.renderBets(table);
-        Render.btnNumberEvent(table);
-        document.getElementById("submitDiv").addEventListener("click", () => {
+        let betsAndActionDiv = document.getElementById("actionsAndBetsDiv");
         let userData = {'action': "", 'amount': ''}
-        userData.amount = document.getElementById("totalAmount").value;
-
-        table.haveTurn();
-        Render.renderTable(table);
-        this.playGame(table);
-    });
+        //table.gamePahseがbettingの場合
+        if (table.gamePhase === 'betting'){
+            
+            //betsDivにrenderBetsを実行してボタンを表示
+            betsAndActionDiv.innerHTML = Render.renderBets(table);
+            Render.btnNumberEvent(table);
+            document.getElementById("submitDiv").addEventListener("click", () => {
+            userData.amount = parseInt(document.getElementById("totalAmount").innerText);
+            console.log(userData)
+            table.haveTurn(userData);
+            Render.renderTable(table);
+            this.playGame(table);
+            
+        });
+    }   
+        //bustするまで引いてしまうのを防がなければならない。
+        //->haveTurnでwhileループしてた。->whileループをやめて、playGameで再帰処理を行う。
+        else if (table.gamePhase === 'playerTurn'){
+            betsAndActionDiv.innerHTML = Render.renderActions();
+            let actions = betsAndActionDiv.querySelectorAll(".btn");
+            actions.forEach((action) => {
+                action.addEventListener("click", (event) => {
+                    let userData = {'action': "", 'amount': ''}
+                    userData.action = event.target.innerText.toLowerCase();
+                    table.haveTurn(userData);
+                    Render.renderTable(table);
+                    this.playGame(table);
+                });
+            });
+        }
+       
     }
     else{
         console.log('error');
@@ -62,9 +84,9 @@ export class Render{
 
                 <!-- actionsAndBetsDiv -->
                 <div id="actionsAndBetsDiv" class="d-flex justify-content-center mt-3">
-                    <div id="betsDiv" class="d-flex flex-column w-50">
+                    
 
-                        </div>
+                        
                     </div>
                 </div><!-- end actionsAndBetsDiv-->
             </div>
@@ -113,27 +135,32 @@ export class Render{
     }
 
     static renderBets(table){ 
-            let betsDiv = ' <div class="d-flex justify-content-around">';
+            let betsDiv = `
+            <div id="betsDiv" class="d-flex flex-column w-50">
+                <div class="d-flex justify-content-around">
+                                
+            `;
             let bets = table.betDominations;
 
             for (let bet of bets){
             betsDiv += `
                         <div class="d-flex flex-column">
                             <div>
+                            
                                 <div class="input-group" >
                                     <span class="input-group-btn">
                                         <button type="button" class="btn btn-danger btn-number">
                                             -
                                         </button>
                                     </span>
-                                    <span class="bg-white">0</span>
+                                    <span class="bg-white ">0</span>
                                     <span class="input-group-btn">
                                         <button type="button" class="btn btn-success btn-number">
                                             +
                                         </button>
                                     </span>
                                 </div><!--end input group div -->
-                                <p class="text-white text-center">${bet}</p>
+                                <p class="text-white text-center h4">${bet}</p>
                             </div>
                         </div>
             `;
@@ -148,7 +175,7 @@ export class Render{
         return betsDiv;
         }
 
-    static btnNumberEvent(table){
+    static btnNumberEvent(){
         let btnSuccessList = document.querySelectorAll(".btn-success");
 
         btnSuccessList.forEach((btnSuccess) =>{
@@ -186,5 +213,26 @@ export class Render{
         
 
         totalAmountElement.textContent = totalAmount.toString();
+    }
+
+    static renderActions(){
+        let actionsDiv = `
+        <!-- actionsDiv -->
+                <div id ="actionsDiv" class="d-flex flex-wrap w-70">
+                    <div class="py-2">
+                        <a class="text-dark btn btn-light px-5 py-1">Surrender</a>
+                    </div>
+                    <div class="py-2">
+                        <a class="btn btn-success px-5 py-1 text-white">Stand</a>
+                    </div>
+                    <div class="py-2">
+                        <a class="btn btn-warning px-5 py-1">Hit</a>
+                    </div>
+                    <div class="py-2">
+                        <a class="btn btn-danger px-5 py-1 text-white">Double</a>
+                    </div>
+                </div> <!-- end actionsDiv -->
+        `;
+        return actionsDiv;
     }
 }

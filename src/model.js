@@ -138,6 +138,7 @@ export class Table{
         let searchStatus = 'None';
         let lastPlayer ;
         if (this.gamePhase === 'betting'){
+            console.log('betting')
             searchStatus = 'betting'
             lastPlayer = this.onLastPlayer(searchStatus);
             //現在のプレイヤーを取得する
@@ -146,24 +147,24 @@ export class Table{
             //プレイヤーの状態がbettingの場合は、promptPlayerを使用してbetを取得する
             if (currentPlayer.gameStatus === 'betting'){
                 currentPlayer.bet = currentPlayer.promptPlayer(userData).amount;
-                currentPlayer.gameStatus = 'playing';
+                currentPlayer.gameStatus = 'playerTurn';
             }
         
         } else if (this.gamePhase === 'playerTurn'){
-            searchStatus = 'playing'
+            console.log('playerTurn')
+            searchStatus = 'playerTurn'
             lastPlayer = this.onLastPlayer(searchStatus);
             //現在のプレイヤーを取得する
             let currentPlayer = this.getTurnPlayer(searchStatus);
             //現在のプレイヤーのアクションを実行する。
-            //プレイヤーの状態がplayingの場合は、promptPlayerを使用してアクションを取得する
+            //プレイヤーの状態がplayerTurnの場合は、promptPlayerを使用してアクションを取得する
             //取得したactionをevaluateMoveに渡す。currentPlayerのgameStatusがstandかbustになるまで繰り返す。
-            while (currentPlayer.gameStatus === 'playing' || currentPlayer.gameStatus === 'hit'){
-                currentPlayer.gameStatus = currentPlayer.promptPlayer(userData).action;
-                this.evaluateMove(currentPlayer);
-            }
+            currentPlayer.gameStatus = currentPlayer.promptPlayer(userData).action;
+            this.evaluateMove(currentPlayer);
+            
         }else if (this.gamePhase === 'houseTurn'){
             lastPlayer = true;
-            while (this.house.gameStatus === 'playing' || this.house.gameStatus === 'hit'){
+            while (this.house.gameStatus === 'playerTurn' || this.house.gameStatus === 'hit'){
                 this.house.gameStatus = this.house.promptPlayer(userData).action;
                 this.evaluateMove(this.house);
             }
@@ -180,7 +181,7 @@ export class Table{
                         this.blackjackAssignPlayerHands();
                         break;
                     case 'playerTurn':
-                        this.house.gameStatus = 'playing'
+                        this.house.gameStatus = 'playerTurn'
                         this.gamePhase = 'houseTurn';
                         break;
                     case 'houseTurn':
@@ -209,7 +210,7 @@ export class Table{
                     player.gameStatus = 'bust';
                 }
                 else{
-                    player.gameStatus = 'playing';
+                    player.gameStatus = 'playerTurn';
                 }
             }
         }else if (action === 'stand'){
@@ -269,9 +270,10 @@ export class Player{
         if (userData === null){
             //userDataがnullの場合は、AIの場合とする
             userData = this.aiDecide();
-            this.bet = userData.amount;
-            this.chips -= userData.amount;
+
         }
+        this.bet = userData.amount;
+        this.chips -= userData.amount;
         return new GameDecision(userData.action, userData.amount);
     }
     //合計が21を超える場合は、手札のAを、合計が21以下になるまで1として扱う
@@ -311,7 +313,7 @@ export class Player{
 
 
         //手札の合計が17以上ならstand
-        if (this.gameStatus === 'playing' && this.getHandScore() >= 17){
+        if (this.gameStatus === 'playerTurn' && this.getHandScore() >= 17){
             action = 'stand';
         }
         //手札の合計が17未満ならhit
