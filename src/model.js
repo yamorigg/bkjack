@@ -1,10 +1,10 @@
-//一連の進行を管理するクラス.
-class Table{
+
+export class Table{
     //gameType : ゲームの種類
     //betDominations : 配列。各要素はベットできるチップの単位
     //numberOfPlayers : テーブルに参加するプレイヤーの数
     //human: プレイヤーが人間かどうか表す。値がnullもしくは'ai'の場合はAIとして扱う
-    constructor(gameType, human = null ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 2){
+    constructor(gameType, human = null ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 3){
         this.gameType = gameType;
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
@@ -26,16 +26,20 @@ class Table{
     */
     addPlayers(){
         let players = [];
+        players.push(new Player('Player1', 'ai', this.gameType));
         //humanがnullもしくは'ai'の場合はAIとして扱う。そうでない場合はhumanに入力された値を名前として扱う。typeはhumanとする。
         if (this.human === null || this.human === 'ai'){
-            players.push(new Player('Player1', 'ai', this.gameType));
+            players.push(new Player('Player2', 'ai', this.gameType));
+            players.push(new Player('Player3', 'ai', this.gameType));
         }else{
             players.push(new Player(this.human, 'human', this.gameType));
+            players.push(new Player('Player2', 'ai', this.gameType));
         }
+        
         //最初に足したプレイヤーとthis.numberOfPlayersの数だけプレイヤーを追加する。
-        for (let i = 1; i < this.numberOfPlayers; i++){
-            players.push(new Player('Player' + (i + 1), 'ai', this.gameType));
-        } 
+        // for (let i = 1; i < this.numberOfPlayers; i++){
+        //     players.push(new Player('Player' + (i + 1), 'ai', this.gameType));
+        // } 
         return players;
     }
 
@@ -67,29 +71,33 @@ class Table{
                 }
             }
 
-
+            //プレイヤーの所持金を更新する
             if (player.gameStatus === 'bust'){
                 roundResult += player.name + 'はバーストしました。';
-                player.chips -= player.bet;
                 if (player.chips <= 0){
                     roundResult += player.name + 'は破産しました。';
-                    this.players.splice(i, 1);
+                    this.players.gameStatus = 'broken';
+
                 }
             }else if (player.gameStatus === 'blackjack'){
                 roundResult += player.name + 'はブラックジャックです。';
-                player.chips += player.bet;
+                player.chips += player.bet * 2;
             }else if (player.gameStatus === 'win'){
                 roundResult += player.name + 'は勝ちました。';
-                player.chips += player.bet;
+                player.chips += player.bet * 2;
             }else if (player.gameStatus === 'lose'){
                 roundResult += player.name + 'は負けました。';
-                player.chips -= player.bet;
                 if (player.chips <= 0){
                     roundResult += player.name + 'は破産しました。';
                     this.players.gameStatus = 'broken';
                 }
             }else if (player.gameStatus === 'draw'){
                 roundResult += player.name + 'は引き分けです。';
+                player.chips += player.bet;
+            }
+            //プレイヤーの状態をbettingに戻す
+            if (player.gameStatus !== 'broken'){
+                player.gameStatus = 'betting';
             }
         }
         return this.resultLog.push(roundResult);
@@ -164,7 +172,6 @@ class Table{
         }
         //テーブルの状態を更新する
         //現在のプレイヤーが最後のプレイヤーの場合は、ゲームのフェーズを更新する
-        //現在のプレイヤーが最後のプレイヤーでない場合は、次のプレイヤーに移る
         if (lastPlayer) {
             if (this.gameType === 'blackjack'){
                 switch(this.gamePhase){
@@ -184,12 +191,9 @@ class Table{
                     case 'roundOver':
                         this.gamePhase = 'betting';
                         break;
-                }
-            } else {
-            //次のプレイヤーに移る
-            currentPlayer = this.players[this.players.indexOf(currentPlayer) + 1];
-            }
-    }
+                    }
+                } 
+            }    
 }
 
     //playser: Player.promptPlayer()を使用してGameDecesionを取得。GameDecesionとgametypeに応じてPlayerの状態を更新する
@@ -247,8 +251,7 @@ class Table{
     }
 }
 
-
-class Player{
+export class Player{
     constructor(name , type, gameType, chips = 400){
         this.name = name;
         this.type = type;
@@ -266,6 +269,8 @@ class Player{
         if (userData === null){
             //userDataがnullの場合は、AIの場合とする
             userData = this.aiDecide();
+            this.bet = userData.amount;
+            this.chips -= userData.amount;
         }
         return new GameDecision(userData.action, userData.amount);
     }
@@ -318,7 +323,7 @@ class Player{
 
 }
 
-class GameDecision{
+export class GameDecision{
     // action : Blackjack ではhit, stand, double, split. プレイヤーのアクションの選択
     // amount : プレイヤーが選択する掛け金
     // Player.promptPlayer() メソッドが常にGameDecisionオブジェクトを返す
@@ -328,11 +333,7 @@ class GameDecision{
     }
 }
 
-
-
-
-
-class Deck{
+export class Deck{
     constructor(gameType){
         this.cards = [];
         this.gameType = gameType;
@@ -383,7 +384,7 @@ class Deck{
 }
 
 
-class Card{
+export class Card{
 /*
 String suit : {"H", "D", "C", "S"}から選択
 String rank : {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"}から選択
@@ -408,11 +409,3 @@ String rank : {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"}
 
     }
 }
-
-
-let table1 = new Table('blackjack');
-while(table1.gamePhase !== 'roundOver'){
-    table1.haveTurn();
-}
-
-console.log(table1.resultLog);
