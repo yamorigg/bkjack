@@ -1,14 +1,22 @@
 
 export class GameCon{
     static playGame(table){
-        Render.renderTable(table);
-    if (table.gameStatus === 'roundOver'){
+        // Render.renderTable(table);
+    if (table.gamePhase === 'roundOver'){
         return;
     }
-    //houseのターンの場合の処理
-    console.log(table)
+    if (table.gamePhase === 'houseTurn'){
+        setTimeout(() => {
+            console.log('houseのターンです');
+            table.haveTurn();
+            Render.renderTable(table);
+            this.playGame(table);
+        }, 1000);
+
+    }
+    
     //player.typeがaiの場合は自動でbetを行う
-    if (table.getTurnPlayer(table.gamePhase).type === 'ai'){
+    else if (table.getTurnPlayer(table.gamePhase).type === 'ai'){
         console.log( "aiのターンです");
         //1秒待機
         setTimeout(() => {

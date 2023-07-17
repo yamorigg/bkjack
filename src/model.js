@@ -4,7 +4,7 @@ export class Table{
     //betDominations : 配列。各要素はベットできるチップの単位
     //numberOfPlayers : テーブルに参加するプレイヤーの数
     //human: プレイヤーが人間かどうか表す。値がnullもしくは'ai'の場合はAIとして扱う
-    constructor(gameType, human = null ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 3){
+    constructor(gameType, human ,betDominations = [1, 5, 10, 25, 100], numberOfPlayers = 3){
         this.gameType = gameType;
         this.betDominations = betDominations;
         this.deck = new Deck(this.gameType);
@@ -28,7 +28,7 @@ export class Table{
         let players = [];
         players.push(new Player('Player1', 'ai', this.gameType));
         //humanがnullもしくは'ai'の場合はAIとして扱う。そうでない場合はhumanに入力された値を名前として扱う。typeはhumanとする。
-        if (this.human === null || this.human === 'ai'){
+        if (this.human === 'ai'){
             players.push(new Player('Player2', 'ai', this.gameType));
             players.push(new Player('Player3', 'ai', this.gameType));
         }else{
@@ -42,9 +42,6 @@ export class Table{
         // } 
         return players;
     }
-
-
-
 
     //return string: 新しいターンが始まる直前の全プレイヤーの状態を表す文字列
     //このメソッドの出力は、各ラウンドの終了時にテーブルのresultLogメンバを更新するために使用される
@@ -164,13 +161,15 @@ export class Table{
             
         }else if (this.gamePhase === 'houseTurn'){
             lastPlayer = true;
-            while (this.house.gameStatus === 'playerTurn' || this.house.gameStatus === 'hit'){
-                this.house.gameStatus = this.house.promptPlayer(userData).action;
-                this.evaluateMove(this.house);
-            }
+            this.house.gameStatus = this.house.promptPlayer(userData).action;
+            this.evaluateMove(this.house);
+
         }else if (this.gamePhase === 'roundOver'){
             this.blackjackEvaluateAndGetRoundResult();
         }
+//         lastPlayerがtrueのときのバグ
+// ・最後のプレイヤーは行動後強制的にlastPlayerのifへ入ってしまうので１回しか行動ができない。
+
         //テーブルの状態を更新する
         //現在のプレイヤーが最後のプレイヤーの場合は、ゲームのフェーズを更新する
         if (lastPlayer) {
@@ -181,15 +180,27 @@ export class Table{
                         this.blackjackAssignPlayerHands();
                         break;
                     case 'playerTurn':
-                        this.house.gameStatus = 'playerTurn'
-                        this.gamePhase = 'houseTurn';
-                        break;
+                        //players配列の最後のプレイヤーのgameStatusがplayerTurnの場合。
+                        if (this.players[this.players.length - 1].gameStatus === 'playerTurn'){
+                            break;
+                        }
+
+                        else{
+                            this.house.gameStatus = 'playerTurn'
+                            this.gamePhase = 'houseTurn';
+                            break;
+                        }
+                        
                     case 'houseTurn':
-                        this.gamePhase = 'roundOver';
-                        this.blackjackEvaluateAndGetRoundResult();
-                        this.blackjackClearPlayerHandsAndBets();
-                        break;
+                        if (this.house.gameStatus === 'playerTurn'){
+                            break;
+                        }
+                        else{
+                            this.gamePhase = 'roundOver';
+                            break;
+                        }
                     case 'roundOver':
+                        this.blackjackClearPlayerHandsAndBets();
                         this.gamePhase = 'betting';
                         break;
                     }
@@ -220,7 +231,8 @@ export class Table{
         }else if (action === 'double'){
             player.hand.push(this.deck.drawOne());
             player.bet *= 2;
-            player.gameStatus = 'stand';
+            player.gameStatus = (player.getHandScore()> 21) ?'bust': 'stand';
+
     }
 }
     //return booelan:テーブルがプレイヤー配列の最初のプレイヤーを指しているかときはtrueを返す。そうでない場合はfalseを返す。
