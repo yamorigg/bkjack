@@ -92,10 +92,6 @@ export class Table{
                 roundResult += player.name + 'は引き分けです。';
                 player.chips += player.bet;
             }
-            //プレイヤーの状態をbettingに戻す
-            if (player.gameStatus !== 'broken'){
-                player.gameStatus = 'betting';
-            }
         }
         return this.resultLog.push(roundResult);
     }
@@ -115,8 +111,12 @@ export class Table{
         for (let i = 0; i < this.players.length; i++){
             this.players[i].hand = [];
             this.players[i].bet = 0;
+            this.players[i].gameStatus = 'betting';
         }
         this.house.hand = [];
+        this.house.gameStatus= 'betting';
+        this.gamePhase = 'betting';
+
     }
 
     //return Player: 現在のプレイヤーを返す
@@ -145,6 +145,7 @@ export class Table{
             if (currentPlayer.gameStatus === 'betting'){
                 currentPlayer.bet = currentPlayer.promptPlayer(userData).amount;
                 currentPlayer.gameStatus = 'playerTurn';
+                currentPlayer.chips -= currentPlayer.bet;
             }
         
         } else if (this.gamePhase === 'playerTurn'){
@@ -165,6 +166,7 @@ export class Table{
             this.evaluateMove(this.house);
 
         }else if (this.gamePhase === 'roundOver'){
+            lastPlayer = true;
             this.blackjackEvaluateAndGetRoundResult();
         }
 //         lastPlayerがtrueのときのバグ
@@ -199,10 +201,6 @@ export class Table{
                             this.gamePhase = 'roundOver';
                             break;
                         }
-                    case 'roundOver':
-                        this.blackjackClearPlayerHandsAndBets();
-                        this.gamePhase = 'betting';
-                        break;
                     }
                 } 
             }    
@@ -284,8 +282,9 @@ export class Player{
             userData = this.aiDecide();
 
         }
-        this.bet = userData.amount;
-        this.chips -= userData.amount;
+        
+        // this.bet = userData.amount;
+        // this.chips -= userData.amount;
         return new GameDecision(userData.action, userData.amount);
     }
     //合計が21を超える場合は、手札のAを、合計が21以下になるまで1として扱う

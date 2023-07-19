@@ -1,70 +1,80 @@
 
 export class GameCon{
     static playGame(table){
+        
         // Render.renderTable(table);
-    if (table.gamePhase === 'roundOver'){
-        return;
-    }
-    if (table.gamePhase === 'houseTurn'){
-        setTimeout(() => {
-            console.log('houseのターンです');
+        if (table.gamePhase === 'roundOver'){
             table.haveTurn();
             Render.renderTable(table);
-            this.playGame(table);
-        }, 1000);
-
-    }
-    
-    //player.typeがaiの場合は自動でbetを行う
-    else if (table.getTurnPlayer(table.gamePhase).type === 'ai'){
-        console.log( "aiのターンです");
-        //1秒待機
-        setTimeout(() => {
-            table.haveTurn();
-            Render.renderTable(table);
-            this.playGame(table);
-        }, 1000);
-    }
-    //player.typeがhumanの場合はボタンを表示
-    else if (table.getTurnPlayer(table.gamePhase).type === 'human'){
-        console.log("playerのターンです");
-        let betsAndActionDiv = document.getElementById("actionsAndBetsDiv");
-        let userData = {'action': "", 'amount': ''}
-        //table.gamePahseがbettingの場合
-        if (table.gamePhase === 'betting'){
-            
-            //betsDivにrenderBetsを実行してボタンを表示
-            betsAndActionDiv.innerHTML = Render.renderBets(table);
-            Render.btnNumberEvent(table);
-            document.getElementById("submitDiv").addEventListener("click", () => {
-            userData.amount = parseInt(document.getElementById("totalAmount").innerText);
-            console.log(userData)
-            table.haveTurn(userData);
-            Render.renderTable(table);
-            this.playGame(table);
-            
-        });
-    }   
-        //bustするまで引いてしまうのを防がなければならない。
-        //->haveTurnでwhileループしてた。->whileループをやめて、playGameで再帰処理を行う。
-        else if (table.gamePhase === 'playerTurn'){
-            betsAndActionDiv.innerHTML = Render.renderActions();
-            let actions = betsAndActionDiv.querySelectorAll(".btn");
-            actions.forEach((action) => {
-                action.addEventListener("click", (event) => {
-                    let userData = {'action': "", 'amount': ''}
-                    userData.action = event.target.innerText.toLowerCase();
-                    table.haveTurn(userData);
-                    Render.renderTable(table);
-                    this.playGame(table);
-                });
+            let betsAndActionDiv = document.getElementById("actionsAndBetsDiv");
+            betsAndActionDiv.innerHTML = Render.renderResult(table);
+            document.getElementById("okBtn").addEventListener("click", () => {
+                console.log(table.resultLog);
+                
+                table.blackjackClearPlayerHandsAndBets()
+                console.log(table.resultLog);
+                console.log(table.players);
+                return this.playGame(table);
             });
         }
-       
-    }
-    else{
-        console.log('error');
-    }
+        else if (table.gamePhase === 'houseTurn'){
+            setTimeout(() => {
+                console.log(table.gamePhase)
+                table.haveTurn();
+                Render.renderTable(table);
+                return this.playGame(table);
+            }, 1000);
+
+        }
+        
+        //player.typeがaiの場合は自動でbetを行う
+        else if (table.getTurnPlayer(table.gamePhase).type === 'ai'){
+            //1秒待機
+            setTimeout(() => {
+                table.haveTurn();
+                Render.renderTable(table);
+                return this.playGame(table);
+            }, 1000);
+        }
+        //player.typeがhumanの場合はボタンを表示
+        else if (table.getTurnPlayer(table.gamePhase).type === 'human'){
+            let betsAndActionDiv = document.getElementById("actionsAndBetsDiv");
+            let userData = {'action': "", 'amount': ''}
+            //table.gamePahseがbettingの場合
+            if (table.gamePhase === 'betting'){
+                
+                //betsDivにrenderBetsを実行してボタンを表示
+                betsAndActionDiv.innerHTML = Render.renderBets(table);
+                Render.btnNumberEvent(table);
+                document.getElementById("submitDiv").addEventListener("click", () => {
+                userData.amount = parseInt(document.getElementById("totalAmount").innerText);
+                console.log(userData)
+                table.haveTurn(userData);
+                Render.renderTable(table);
+                return this.playGame(table);
+                
+            });
+        }   
+            //bustするまで引いてしまうのを防がなければならない。
+            //->haveTurnでwhileループしてた。->whileループをやめて、playGameで再帰処理を行う。
+            else if (table.gamePhase === 'playerTurn'){
+                betsAndActionDiv.innerHTML = Render.renderActions();
+                let actions = betsAndActionDiv.querySelectorAll(".btn");
+                actions.forEach((action) => {
+                    action.addEventListener("click", (event) => {
+                        let userData = {'action': "", 'amount': ''}
+                        userData.action = event.target.innerText.toLowerCase();
+                        table.haveTurn(userData);
+                        Render.renderTable(table);
+                        return this.playGame(table);
+                    });
+                });
+            }
+        
+        }
+        else{
+            console.log('error');
+        }
     }
 }
 
@@ -75,8 +85,8 @@ export class Render{
         <!-- all cards (dealer, players) div -->
         <div class="col-12">
             <div class="pt-5">
-                <p class="m-0 text-center text-white rem3">Dealer</p>
-
+                <p class="m-0 text-center text-white rem3">House</p>
+                <p class="text-white  text-center m-0 h6">S: ${table.house.gameStatus}</p>
                 <!-- House Card Row -->
                 <div id="houesCardDiv" class="d-flex justify-content-center pt-3 pb-5">
                     ${this.renderCards(table.house.hand)}
@@ -242,5 +252,14 @@ export class Render{
                 </div> <!-- end actionsDiv -->
         `;
         return actionsDiv;
+    }
+
+    //ゲーム終了後resultを表示する。
+    static renderResult(table){
+        let resultDiv = "";
+        resultDiv += `
+            <div id ='okBtn' class="btn bg-primary">OK</div>
+        `;
+        return resultDiv;
     }
 }
