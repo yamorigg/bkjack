@@ -142,7 +142,8 @@ export class Render{
             playersDiv += `
                 <div class="flex-column w-25">
                     <p class="m-0 text-white text-center h2">${player.name}</p>
-                    <p class="text-white  text-center m-0 h6">S: ${player.gameStatus}    B: ${player.bet}    C: ${player.chips}</p>
+                    <p class="text-white  text-center m-0 h6">S: ${player.gameStatus}    B: ${player.bet}    C: ${player.chips} </p>
+                    <p class="text-white  text-center m-0 h6">Hand:${player.getHandScore()}</p>
                     <div class="d-flex justify-content-center m-2">
                         ${this.renderCards(player.hand)}
                     </div>
@@ -203,6 +204,10 @@ export class Render{
                 let betAmount = parseInt(eventTarget.parentElement.parentElement.parentElement.querySelector('p').textContent);
                 let bet = eventTarget.parentElement.parentElement.querySelector(".bg-white");
                 let currentValue = parseInt(bet.textContent);
+                //プレイヤーの所持金より多く賭けられないようにする
+
+
+
                 let newValue = currentValue + 1;
                 bet.textContent = newValue;
 
@@ -217,9 +222,15 @@ export class Render{
                 let betAmount = -(parseInt(eventTarget.parentElement.parentElement.parentElement.querySelector('p').textContent));
                 let bet = eventTarget.parentElement.parentElement.querySelector(".bg-white");
                 let currentValue = parseInt(bet.textContent);
+                
+                //0以下にならないようにする
+                if (currentValue === 0){
+                    return;
+                }
+                else {
                 let newValue = currentValue - 1;
                 bet.textContent = newValue;
-                
+                }
                 this.updateTotalAmount(betAmount);
             });
         });
@@ -227,8 +238,12 @@ export class Render{
     static updateTotalAmount(amount) {
         let totalAmountElement = document.getElementById("totalAmount");
         let totalAmount = parseInt(totalAmountElement.textContent);
-        totalAmount += amount;
-        
+        if (totalAmount + amount < 0) {
+            return;
+        }
+        else{
+            totalAmount += amount;
+        }
 
         totalAmountElement.textContent = totalAmount.toString();
     }
